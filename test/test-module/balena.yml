@@ -1,0 +1,8 @@
+type: type-product-os-t-golang-source@1.0.1
+name: helloworld
+version: 0.1.0
+data:
+  platforms:
+    - linux/amd64
+  tags: |-
+    test

@@ -3,13 +3,13 @@
 set -e
 
 INPUT_ARTIFACT_PATH="$(dirname "${INPUT}")/$(jq -r '.input.artifactPath' "${INPUT}")"
-# TODO handle?
+test -d "${INPUT_ARTIFACT_PATH}"
+
+# TODO handle array?
 INPUT_PLATFORM=$(jq -r '.input.contract.data.platforms[0]' "${INPUT}")
 INPUT_TAGS=$(jq -r '.input.contract.data.tags' "${INPUT}")
 INPUT_VERSION=$(jq -r '.input.contract.version' "${INPUT}")
 INPUT_NAME=$(jq -r '.input.contract.name' "${INPUT}")
-# TODO get from source?
-INPUT_GO_PACKAGE=example.com/helloworld
 
 OUTPUT_TYPE=type-product-os-executable@1.0.1
 OUTPUT_ARTIFACT_DIRNAME=artifacts
@@ -20,9 +20,6 @@ OUTPUT_VERSION=$INPUT_VERSION
 OUTPUT_ARTIFACT_PATH="$(dirname "${OUTPUT}")/${OUTPUT_ARTIFACT_DIRNAME}"
 
 RESULTS='[]'
-function json_append() {
-	jq -n -c --argjson total "${1}" --argjson new "${2}" '$total + [$new]'
-}
 
 function goBuild() {
 	cd "${INPUT_ARTIFACT_PATH}" || exit 1
@@ -31,8 +28,9 @@ function goBuild() {
 
 	# handle non-modules
 	if ! [ -f go.mod ]; then
-		mkdir -p "${GOPATH}/$(dirname "${INPUT_GO_PACKAGE}")"
-		ln -sfv "${INPUT_ARTIFACT_PATH}" "${GOPATH}/${INPUT_GO_PACKAGE}"
+		mkdir -p "${GOPATH}/src/"
+		ln -sfv "${INPUT_ARTIFACT_PATH}" "${GOPATH}/src/${INPUT_NAME}"
+		cd "${GOPATH}/src/${INPUT_NAME}"
 		export GO111MODULE=off
 	fi
 
@@ -53,6 +51,10 @@ function goBuild() {
 	RESULTS=$(json_append "${RESULTS}" "$(goBuildResult)")
 }
 
+function json_append() {
+	jq -n -c --argjson total "${1}" --argjson new "${2}" '$total + [$new]'
+}
+
 function goBuildResult() {
 	jq -n -c \
 		--arg type "${OUTPUT_TYPE}" \
@@ -70,5 +72,6 @@ function writeResultsJson() {
 mkdir -p "${OUTPUT_ARTIFACT_PATH}"
 
 goBuild
-
 writeResultsJson
+
+# done
