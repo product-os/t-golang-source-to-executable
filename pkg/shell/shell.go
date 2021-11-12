@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -38,6 +39,8 @@ func Run(command string, args []string, stdin io.Reader, stdout, stderr io.Write
 		fn(cmd)
 	}
 
+	log.Printf("+ %s", cmd)
+
 	if err := cmd.Run(); err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
 			return 1, err
@@ -50,5 +53,6 @@ func Run(command string, args []string, stdin io.Reader, stdout, stderr io.Write
 		}
 		return 1, err
 	}
+
 	return 0, nil
 }

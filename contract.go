@@ -3,6 +3,7 @@ package main
 const (
 	TypeGolangSource = "type-product-os-t-golang-source@1.0.1"
 	TypeExecutable   = "type-product-os-t-executable@1.0.1"
+	TypeTestRun      = "type-product-os-t-test-run@0.0.2"
 )
 
 type NInput struct {
@@ -28,6 +29,7 @@ type Contract struct {
 type ContractData struct {
 	GolangSourceData
 	ExecutableData
+	TestRunData
 }
 
 type GolangSourceData struct {
@@ -41,4 +43,14 @@ type ExecutableData struct {
 	Filename  string              `json:"filename,omitempty"`
 	Version   string              `json:"version,omitempty"`
 	DependsOn map[string][]string `json:"dependsOn,omitempty"`
+}
+
+type TestRunData struct {
+	Success bool          `json:"success,omitempty"`
+	Suites  []SuiteResult `json:"suiteResults,omitempty"`
+}
+
+type SuiteResult struct {
+	Name    string `json:"suiteName"`
+	Success bool   `json:"suiteSuccess"`
 }

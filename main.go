@@ -76,6 +76,9 @@ func main() {
 
 	inputArtifactPath := filepath.Join(filepath.Dir(inputPath), input.Input.ArtifactPath)
 	outputArtifactPath := filepath.Join(filepath.Dir(outputPath), artifactPath)
+	if err := os.MkdirAll(outputArtifactPath, os.ModeDir|os.ModePerm); err != nil {
+		log.Fatalf("creating output artifact path %s: %v", outputArtifactPath, err)
+	}
 
 	if err := os.Chdir(inputArtifactPath); err != nil {
 		log.Fatal(err)
@@ -87,7 +90,15 @@ func main() {
 
 	switch mode {
 	case "build":
-		result := TransformerAsset{
+		if err := build(inputArtifactPath, debug, BuildOpts{
+			Name:      input.Input.Contract.Name,
+			Version:   input.Input.Contract.Version,
+			Tags:      input.Input.Contract.Data.GolangSourceData.Tags,
+			OutputDir: outputArtifactPath,
+		}); err != nil {
+			log.Fatalf("build failed: %v", err)
+		}
+		output.Results = append(output.Results, TransformerAsset{
 			ArtifactPath: artifactPath,
 			Contract: Contract{
 				Type: TypeExecutable,
@@ -102,32 +113,48 @@ func main() {
 					DependsOn: input.Input.Contract.Data.GolangSourceData.DependsOn,
 				}},
 			},
-		}
-		if err := build(inputArtifactPath, debug, BuildOpts{
-			BinaryName: input.Input.Contract.Name,
-			Version:    input.Input.Contract.Version,
-			Tags:       input.Input.Contract.Data.GolangSourceData.Tags,
-			OutputDir:  outputArtifactPath,
-		}); err != nil {
-			log.Fatalf("build failed: %s", err)
-		}
-		output.Results = append(output.Results, result)
+		})
 
 	case "test":
-		log.Fatalf("unimplemented mode %q", mode)
+		unitSuites, unitErr := test(inputArtifactPath, debug, TestOpts{
+			Name:        input.Input.Contract.Name,
+			Tags:        input.Input.Contract.Data.GolangSourceData.Tags,
+			Integration: false,
+		})
+		if unitSuites == nil && unitErr != nil {
+			log.Fatalf("unit tests failed: %v", unitErr)
+		}
+		integrationSuites, integrationErr := test(inputArtifactPath, debug, TestOpts{
+			Name:        input.Input.Contract.Name,
+			Tags:        input.Input.Contract.Data.GolangSourceData.Tags,
+			Integration: true,
+		})
+		if integrationSuites == nil && integrationErr != nil {
+			log.Fatalf("integration tests failed: %v", integrationErr)
+		}
+		output.Results = append(output.Results, TransformerAsset{
+			ArtifactPath: artifactPath,
+			Contract: Contract{
+				Type: TypeTestRun,
+				Data: ContractData{TestRunData: TestRunData{
+					Success: unitErr == nil && integrationErr == nil,
+					Suites:  append(unitSuites, integrationSuites...),
+				}},
+			},
+		})
 
 	default:
 		log.Fatalf("unknown mode %q", mode)
 
 	}
 
-	// write input contract
+	// write output contract
 	outputFd, err := os.Create(outputPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("creating output manifest %s: %v", outputPath, err)
 	}
 	if err := json.NewEncoder(outputFd).Encode(output); err != nil {
-		log.Fatal(err)
+		log.Fatalf("writing output manifest %s: %v", outputPath, err)
 	}
 }
 

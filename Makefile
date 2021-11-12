@@ -1,8 +1,9 @@
+MODE ?= build
 IMAGENAME = golang-source-to-executable:latest
 
 .PHONY: dockerize
 dockerize:
-	docker build -t ${IMAGENAME} .
+	docker build -t ${IMAGENAME} --target=${MODE} .
 
 test: test-module test-legacy
 
