@@ -1,0 +1,15 @@
+{
+  "results": [
+    {
+      "contract": {
+        "type": "type-product-os-t-executable@1.0.1",
+        "data": {
+          "platform": "linux/amd64",
+          "filename": "helloworld-legacy",
+          "version": "0.1.0"
+        }
+      },
+      "artifactPath": "artifacts"
+    }
+  ]
+}

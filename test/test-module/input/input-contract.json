@@ -1,0 +1,23 @@
+{
+  "input": {
+    "contract": {
+      "data": {
+        "dependsOn": {
+          "debian": [
+            "scdoc"
+          ]
+        },
+        "platforms": [
+          "linux/amd64"
+        ],
+        "tags": [
+          "test"
+        ]
+      },
+      "name": "helloworld-module",
+      "type": "type-product-os-t-golang-source@1.0.1",
+      "version": "0.1.0"
+    },
+    "artifactPath": "artifacts"
+  }
+}
