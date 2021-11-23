@@ -6,7 +6,7 @@ A transformer that takes in [Golang source][golang-source] bundles and outputs [
 [executable]: https://github.com/product-os/t-executable
 
 
-## notes
+## Notes for local development
 
 you can set various env vars to change some behaviors:
 
