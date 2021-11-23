@@ -1,8 +1,8 @@
 package main
 
 const (
-	TypeGolangSource = "type-product-os-t-golang-source@1.0.1"
-	TypeExecutable   = "type-product-os-t-executable@1.0.1"
+	TypeGolangSource = "type-product-os-t-golang-source@1.0.2"
+	TypeExecutable   = "type-product-os-t-executable@1.0.2"
 	TypeTestRun      = "type-product-os-t-test-run@0.0.2"
 )
 

@@ -1,24 +1,25 @@
 type: service-source@1.0.0
 name: Golang source to executable transformer
 version: 0.1.0
+slug: service-source-product-os-t-golang-source-to-executable
 data:
   platforms:
     linux/amd64: {}
-  $transformer:
-    {}
-    # this opts-in to being processed by transformers
+  # this opts-in to being processed by transformers
+  $transformer: {}
   fragment:
     type: transformer@1.0.0
     data:
-        # encryptedSecrets:
-        #   buildSecrets: {}
+      # encryptedSecrets:
+      #   buildSecrets: {}
       inputFilter:
         type: object
         required:
           - type
           - version
+          - name
         properties:
           type:
-            const: type-t-golang-source@0.0.1
+            const: type-product-os-t-golang-source@1.1.0
           version:
             pattern: ^[^+]*- # only run on draft versions and build stuff
