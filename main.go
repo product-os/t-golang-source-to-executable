@@ -90,30 +90,39 @@ func main() {
 
 	switch mode {
 	case "build":
-		if err := build(inputArtifactPath, debug, BuildOpts{
-			Name:      input.Input.Contract.Name,
-			Version:   input.Input.Contract.Version,
-			Tags:      input.Input.Contract.Data.GolangSourceData.Tags,
-			OutputDir: outputArtifactPath,
-		}); err != nil {
-			log.Fatalf("build failed: %v", err)
+		var binaries []string
+		if input.Input.Contract.Data.Binaries != nil {
+			binaries = input.Input.Contract.Data.Binaries
+		} else {
+			// fallback to a binary with the same name as the repo
+			binaries = []string{input.Input.Contract.Name}
 		}
-		output.Results = append(output.Results, TransformerAsset{
-			ArtifactPath: artifactPath,
-			Contract: Contract{
-				Type: TypeExecutable,
-				Data: ContractData{ExecutableData: ExecutableData{
-					// NOTE: we set platform to the native platform of the go runtime here
-					// this means we completely disregard the fact that we could actually
-					// do cross-compilation.
-					// We have the target platform in `input.Input.Contract.Data.GolangSourceData.Platforms`
-					Platform:  fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
-					Filename:  input.Input.Contract.Name,
-					Version:   input.Input.Contract.Version,
-					DependsOn: input.Input.Contract.Data.GolangSourceData.DependsOn,
-				}},
-			},
-		})
+		for _, bin := range binaries {
+			if err := build(inputArtifactPath, debug, BuildOpts{
+				Name:      bin,
+				Version:   input.Input.Contract.Version,
+				Tags:      input.Input.Contract.Data.GolangSourceData.Tags,
+				OutputDir: outputArtifactPath,
+			}); err != nil {
+				log.Fatalf("build failed: %v", err)
+			}
+			output.Results = append(output.Results, TransformerAsset{
+				ArtifactPath: artifactPath,
+				Contract: Contract{
+					Type: TypeExecutable,
+					Data: ContractData{ExecutableData: ExecutableData{
+						// NOTE: we set platform to the native platform of the go runtime here
+						// this means we completely disregard the fact that we could actually
+						// do cross-compilation.
+						// We have the target platform in `input.Input.Contract.Data.GolangSourceData.Platforms`
+						Platform:  fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
+						Filename:  bin,
+						Version:   input.Input.Contract.Version,
+						DependsOn: input.Input.Contract.Data.GolangSourceData.DependsOn,
+					}},
+				},
+			})
+		}
 
 	case "test":
 		unitSuites, unitErr := test(inputArtifactPath, debug, TestOpts{

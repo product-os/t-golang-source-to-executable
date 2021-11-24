@@ -34,6 +34,7 @@ type ContractData struct {
 
 type GolangSourceData struct {
 	Platforms []string            `json:"platforms,omitempty"`
+	Binaries  []string            `json:"binaries,omitempty"`
 	Tags      []string            `json:"tags,omitempty"`
 	DependsOn map[string][]string `json:"dependsOn,omitempty"`
 }

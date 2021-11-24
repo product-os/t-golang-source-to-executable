@@ -11,7 +11,11 @@
           "linux/amd64"
         ],
         "tags": [
-          "test"
+          "testtag"
+        ],
+        "binaries": [
+          "foo",
+          "bar"
         ]
       },
       "name": "helloworld-module",

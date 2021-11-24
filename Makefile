@@ -12,3 +12,6 @@ test-module: dockerize
 
 test-legacy: dockerize
 	@env SUITE=$@ IMAGENAME=${IMAGENAME} ./test/run.sh
+
+test-mvp: dockerize
+	@env SUITE=$@ IMAGENAME=${IMAGENAME} ./test/run.sh
