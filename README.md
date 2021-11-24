@@ -6,9 +6,10 @@ A transformer that takes in [Golang source][golang-source] bundles and outputs [
 [executable]: https://github.com/product-os/t-executable
 
 
-## Notes for local development
+## usage
 
-you can set various env vars to change some behaviors:
+See [go-module example](test/test-module/input/artifacts)
 
-- set `ARTIFACTPATH=assets` to change the output artifact path
+## notes for development
+
 - set `DEBUG=1` to get more verbose output
