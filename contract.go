@@ -3,7 +3,7 @@ package main
 const (
 	TypeGolangSource = "type-product-os-t-golang-source@1.1.0"
 	TypeExecutable   = "type-product-os-t-executable@1.1.0"
-	TypeTestRun      = "type-product-os-t-test-run@0.0.2"
+	TypeTestRun      = "type-product-os-t-test-run@1.0.2"
 )
 
 type NInput struct {
@@ -52,6 +52,7 @@ type TestRunData struct {
 }
 
 type SuiteResult struct {
-	Name    string `json:"suiteName"`
-	Success bool   `json:"suiteSuccess"`
+	Name           string   `json:"suiteName,omitempty"`
+	Success        bool     `json:"suiteSuccess,omitempty"`
+	UnmatchedFiles []string `json:"unmatchedFiles,omitempty"`
 }
