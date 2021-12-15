@@ -1,4 +1,4 @@
-type: type-product-os-t-golang-source@1.0.2
+type: type-product-os-t-golang-source@1.1.0
 name: helloworld-module
 # we automatically set -ldflags '-X version.Version=0.1.0' during build
 version: 0.1.0
