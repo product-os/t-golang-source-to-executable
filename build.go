@@ -29,10 +29,25 @@ func build(workdir string, debug bool, opts BuildOpts) error {
 	buildArgs := []string{
 		"build",
 		"-o", filepath.Join(opts.OutputDir, opts.Name),
-		// TODO: investigate https://github.com/golang/go/issues/37475
-		//                   https:// github.com/golang/go/commit/76cef81bcff371c88d277f17c712ecf22b8c83e7
-		//                   (needs go1.18)
+
+		// TODO: is standardizing on a version pkg a good idea?
+		//
+		// moby uses "dockerversion.{Version,Revision}"
+		// buildkit uses "version.{Version,Revision}"
+		// containerd uses "version.{Version,Revision}"
+		//
+		// https://pkg.go.dev/runtime/debug#ReadBuildInfo
+		// actually supports getting the embedded module version since go 1.12
+		// we could rely on projects using that to set version... instead of embedding
+		// it like this
 		"-ldflags", fmt.Sprintf("-X version.Version=%s", opts.Version),
+
+		// TODO: is the context always a git repo / can I get the git commit
+		// with https://github.com/golang/go/issues/37475 (go 1.18)
+		// git revision information will be automatically added by the go tool,
+		// https://github.com/carlmjohnson/versioninfo is an easy way to set those
+		// values without settings `-ldflags "-X ..."` from an external wrapper script
+		// "-ldflags", fmt.Sprintf("-X version.Revision=%s", revision?),
 	}
 
 	if debug {

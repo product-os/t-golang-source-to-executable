@@ -57,8 +57,8 @@ func main() {
 	}
 
 	var (
-		input  NInput
-		output NOutput
+		input  InputManifest
+		output OutputManifest
 	)
 
 	// load input contract
@@ -106,7 +106,7 @@ func main() {
 			}); err != nil {
 				log.Fatalf("build failed: %v", err)
 			}
-			output.Results = append(output.Results, TransformerAsset{
+			output.Results = append(output.Results, Result{
 				ArtifactPath: artifactPath,
 				Contract: Contract{
 					Type: TypeExecutable,
@@ -141,7 +141,7 @@ func main() {
 		if integrationSuites == nil && integrationErr != nil {
 			log.Fatalf("integration tests failed: %v", integrationErr)
 		}
-		output.Results = append(output.Results, TransformerAsset{
+		output.Results = append(output.Results, Result{
 			ArtifactPath: artifactPath,
 			Contract: Contract{
 				Type: TypeTestRun,
