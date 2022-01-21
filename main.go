@@ -19,27 +19,31 @@ const (
 )
 
 var (
-	inputPath    string
-	outputPath   string
-	mode         string
-	artifactPath string
-	debug        bool
+	inputPath               string = "./input/input-contract.json"
+	outputPath              string = "./output/output-manifest.json"
+	mode                    string = "build"
+	outputArtifactDirectory string = OUTPUT_ARTIFACT_DIRNAME
+	debug                   bool   = false
 )
 
 func main() {
 	log.SetOutput(os.Stderr)
 	log.SetFlags(log.Flags() | log.Lshortfile)
 
-	flag.StringVar(&inputPath, "input", "", "input contract path")
-	flag.StringVar(&outputPath, "output", "", "output contract path")
-	flag.StringVar(&mode, "mode", "build", "what do? [build or test]")
-	flag.StringVar(&artifactPath, "artifactPath", OUTPUT_ARTIFACT_DIRNAME, "artifact path for output assets")
-	flag.BoolVar(&debug, "debug", false, "be verbose")
+	flag.StringVar(&inputPath, "input", inputPath, "input contract path")
+	flag.StringVar(&outputPath, "output", outputPath, "output contract path")
+	flag.StringVar(&mode, "mode", mode, "what do? [build or test]")
+	flag.StringVar(&outputArtifactDirectory, "outputArtifactDirectory", outputArtifactDirectory, "path to output assets")
+	flag.BoolVar(&debug, "debug", debug, "be verbose")
 	flag.Parse()
 
+	provided := map[string]bool{}
+	flag.CommandLine.Visit(func(fl *flag.Flag) {
+		provided[fl.Name] = true
+	})
 	flag.CommandLine.VisitAll(func(fl *flag.Flag) {
-		// override with envvar if set
-		if val, ok := os.LookupEnv(strings.ToUpper(fl.Name)); ok {
+		// override if envvar is set and flag was not provided
+		if val, ok := os.LookupEnv(strings.ToUpper(fl.Name)); !provided[fl.Name] && ok {
 			if err := fl.Value.Set(val); err != nil {
 				panic(err)
 			}
@@ -75,7 +79,7 @@ func main() {
 	}
 
 	inputArtifactPath := filepath.Join(filepath.Dir(inputPath), input.Input.ArtifactPath)
-	outputArtifactPath := filepath.Join(filepath.Dir(outputPath), artifactPath)
+	outputArtifactPath := filepath.Join(filepath.Dir(outputPath), outputArtifactDirectory)
 	if err := os.MkdirAll(outputArtifactPath, os.ModeDir|os.ModePerm); err != nil {
 		log.Fatalf("creating output artifact path %s: %v", outputArtifactPath, err)
 	}
@@ -107,7 +111,7 @@ func main() {
 				log.Fatalf("build failed: %v", err)
 			}
 			output.Results = append(output.Results, Result{
-				ArtifactPath: artifactPath,
+				ArtifactPath: outputArtifactDirectory,
 				Contract: Contract{
 					Type: TypeExecutable,
 					Data: ContractData{ExecutableData: ExecutableData{
@@ -142,7 +146,7 @@ func main() {
 			log.Fatalf("integration tests failed: %v", integrationErr)
 		}
 		output.Results = append(output.Results, Result{
-			ArtifactPath: artifactPath,
+			ArtifactPath: outputArtifactDirectory,
 			Contract: Contract{
 				Type: TypeTestRun,
 				Data: ContractData{TestRunData: TestRunData{

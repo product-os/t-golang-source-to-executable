@@ -8,7 +8,7 @@ OUTDIR=$(mktemp -d --tmpdir "tf-golang-${SUITE}"-XXXX)
 
 jq -r '.' "./test/${SUITE}/input/input-contract.json"
 
-artifactPath=$(jq -r '.input.artifactPath' "./test/${SUITE}/input/input-contract.json")
+artifactPath=$(jq -r '.results[0].artifactPath' "./test/${SUITE}/output/output-manifest.json")
 
 # run the tf container on $SUITE
 docker run --rm -it \
