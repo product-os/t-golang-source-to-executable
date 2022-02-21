@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,7 +41,7 @@ func build(workdir string, debug bool, opts BuildOpts) error {
 		// actually supports getting the embedded module version since go 1.12
 		// we could rely on projects using that to set version... instead of embedding
 		// it like this
-		"-ldflags", fmt.Sprintf("-X version.Version=%s", opts.Version),
+		"-ldflags", fmt.Sprintf("'-X version.Version=%s'", opts.Version),
 
 		// TODO: is the context always a git repo / can I get the git commit
 		// with https://github.com/golang/go/issues/37475 (go 1.18)
@@ -73,11 +74,13 @@ func build(workdir string, debug bool, opts BuildOpts) error {
 func gopathFix(workdir string, name string, env []string) (string, []string, error) {
 	_, err := os.Stat(filepath.Join(workdir, "go.mod"))
 	if err == nil {
+		log.Println("build mode = module")
 		return workdir, env, nil
 	}
 	if !errors.Is(err, os.ErrNotExist) {
 		return workdir, env, err
 	}
+	log.Println("build mode = gopath")
 	env = append(env, "GO111MODULE=off")
 	gopath, ok := os.LookupEnv("GOPATH")
 	if !ok {

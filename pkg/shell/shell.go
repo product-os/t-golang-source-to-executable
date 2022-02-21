@@ -13,12 +13,14 @@ import (
 type CmdOpt func(cmd *exec.Cmd)
 
 func WithEnv(env []string) CmdOpt {
+	log.Printf("env = %v", env)
 	return func(cmd *exec.Cmd) {
 		cmd.Env = append(cmd.Env, env...)
 	}
 }
 
 func WithDir(dir string) CmdOpt {
+	log.Printf("working directory = %s", dir)
 	return func(cmd *exec.Cmd) {
 		cmd.Dir = dir
 	}
