@@ -1,0 +1,26 @@
+{
+  "results": [
+    {
+      "contract": {
+        "type": "type-product-os-t-executable@1.1.0",
+        "data": {
+          "platform": "linux/amd64",
+          "filename": "foo",
+          "version": "0.1.0"
+        }
+      },
+      "artifactPath": "artifacts"
+    },
+    {
+      "contract": {
+        "type": "type-product-os-t-executable@1.1.0",
+        "data": {
+          "platform": "linux/amd64",
+          "filename": "bar",
+          "version": "0.1.0"
+        }
+      },
+      "artifactPath": "artifacts"
+    }
+  ]
+}

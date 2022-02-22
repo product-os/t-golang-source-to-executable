@@ -1,0 +1,10 @@
+{
+  "data": {
+    "platforms": [
+      "linux/amd64"
+    ]
+  },
+  "name": "mvp",
+  "type": "type-product-os-t-golang-source@1.1.0",
+  "version": "0.1.0"
+}
