@@ -25,6 +25,13 @@ type TestOpts struct {
 func test(workdir string, debug bool, opts TestOpts) (suites []SuiteResult, err error) {
 	var testEnv []string
 
+	if opts.Integration {
+		log.Printf("running integration tests")
+		opts.Tags = append(opts.Tags, "integration")
+	} else {
+		log.Printf("running unit tests")
+	}
+
 	// handle non-modules
 	workdir, testEnv, err = gopathFix(workdir, opts.Name, testEnv)
 	if err != nil {
@@ -59,12 +66,6 @@ func test(workdir string, debug bool, opts TestOpts) (suites []SuiteResult, err 
 		return nil, err
 	}
 
-	if opts.Integration {
-		log.Printf("running integration tests")
-	} else {
-		log.Printf("running unit tests")
-	}
-
 	// skip if there's nothing to test
 	if len(pkgList) < 1 {
 		log.Printf("no tests to run")
@@ -84,16 +85,12 @@ func test(workdir string, debug bool, opts TestOpts) (suites []SuiteResult, err 
 			return nil, fmt.Errorf("error parsing gotestsum report %s: %w", testReportFd.Name(), err)
 		}
 		if report["Test"] != nil ||
-			report["Action"] == "run" ||
-			report["Action"] == "output" {
-			continue
-		}
-		if report["Action"] == "skip" {
-			log.Printf("skipping %s...", report["Package"])
+			(report["Action"] != "pass" &&
+				report["Action"] != "fail") {
 			continue
 		}
 		suites = append(suites, SuiteResult{
-			Success: (report["Action"] != "fail"),
+			Success: (report["Action"] == "pass"),
 			Name:    fmt.Sprintf("%v", report["Package"]),
 		})
 	}
@@ -102,7 +99,7 @@ func test(workdir string, debug bool, opts TestOpts) (suites []SuiteResult, err 
 	return suites, err
 }
 
-func listPackages(workdir string, buildArgs, env []string, integration bool) (pkgList []string, err error) {
+func listPackages(workdir string, buildArgs, env []string, runIntegrationTests bool) (pkgList []string, err error) {
 	var stdout bytes.Buffer
 	listArgs := []string{"list"}
 	listArgs = append(listArgs, buildArgs...)
@@ -115,15 +112,11 @@ func listPackages(workdir string, buildArgs, env []string, integration bool) (pk
 	}
 	scanner := bufio.NewScanner(&stdout)
 	for scanner.Scan() {
-		// filter integration test packages
-		if integrationTestRegex.MatchString(scanner.Text()) {
-			if !integration {
-				continue
-			}
-		} else {
-			if integration {
-				continue
-			}
+		isIntegrationTestPackage := integrationTestRegex.MatchString(scanner.Text())
+		// filter for integration test packages
+		if (isIntegrationTestPackage && !runIntegrationTests) ||
+			(!isIntegrationTestPackage && runIntegrationTests) {
+			continue
 		}
 		pkgList = append(pkgList, scanner.Text())
 	}
