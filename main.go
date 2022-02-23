@@ -114,7 +114,7 @@ func main() {
 				ArtifactPath: outputArtifactDirectory,
 				Contract: Contract{
 					Type: TypeExecutable,
-					Data: ContractData{ExecutableData: ExecutableData{
+					Data: ContractData{ExecutableData: &ExecutableData{
 						// NOTE: we set platform to the native platform of the go runtime here
 						// this means we completely disregard the fact that we could actually
 						// do cross-compilation.
@@ -149,8 +149,8 @@ func main() {
 			ArtifactPath: outputArtifactDirectory,
 			Contract: Contract{
 				Type: TypeTestRun,
-				Data: ContractData{TestRunData: TestRunData{
-					Success: unitErr == nil && integrationErr == nil,
+				Data: ContractData{TestRunData: &TestRunData{
+					Success: (unitErr == nil && integrationErr == nil),
 					Suites:  append(unitSuites, integrationSuites...),
 				}},
 			},
@@ -171,7 +171,7 @@ func main() {
 	}
 }
 
-func setupTaskEnvironment(data GolangSourceData) error {
+func setupTaskEnvironment(data *GolangSourceData) error {
 	if data.DependsOn != nil {
 		log.Println("fetching dependencies")
 		for distro, pkgs := range data.DependsOn {
