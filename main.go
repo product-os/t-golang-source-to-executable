@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -114,7 +115,7 @@ func main() {
 				ArtifactPath: outputArtifactDirectory,
 				Contract: Contract{
 					Type: TypeExecutable,
-					Data: ContractData{ExecutableData: ExecutableData{
+					Data: ContractData{ExecutableData: &ExecutableData{
 						// NOTE: we set platform to the native platform of the go runtime here
 						// this means we completely disregard the fact that we could actually
 						// do cross-compilation.
@@ -145,12 +146,21 @@ func main() {
 		if integrationSuites == nil && integrationErr != nil {
 			log.Fatalf("integration tests failed: %v", integrationErr)
 		}
+		entries, err := ioutil.ReadDir(outputArtifactPath)
+		if err != nil {
+			log.Fatalf("failed to read output artifact directory: %v", err)
+		}
+		if len(entries) == 0 {
+			// clear "artifactPath" of the result, this will omit this field from
+			// the output manifest
+			outputArtifactDirectory = ""
+		}
 		output.Results = append(output.Results, Result{
 			ArtifactPath: outputArtifactDirectory,
 			Contract: Contract{
 				Type: TypeTestRun,
-				Data: ContractData{TestRunData: TestRunData{
-					Success: unitErr == nil && integrationErr == nil,
+				Data: ContractData{TestRunData: &TestRunData{
+					Success: (unitErr == nil && integrationErr == nil),
 					Suites:  append(unitSuites, integrationSuites...),
 				}},
 			},
@@ -171,7 +181,7 @@ func main() {
 	}
 }
 
-func setupTaskEnvironment(data GolangSourceData) error {
+func setupTaskEnvironment(data *GolangSourceData) error {
 	if data.DependsOn != nil {
 		log.Println("fetching dependencies")
 		for distro, pkgs := range data.DependsOn {

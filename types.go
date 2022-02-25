@@ -13,8 +13,9 @@ type InputManifest struct {
 	Input struct {
 		// ArtifactPath is the directory containing assets,
 		// must be relative to the manifest
-		ArtifactPath string   `json:"artifactPath"`
-		Contract     Contract `json:"contract"`
+		ArtifactPath string `json:"artifactPath"`
+		// Contract is the contract describing the input
+		Contract Contract `json:"contract"`
 	} `json:"input"`
 }
 
@@ -28,8 +29,9 @@ type OutputManifest struct {
 type Result struct {
 	// ArtifactPath is the directory containing assets,
 	// must be relative to the manifest
-	ArtifactPath string   `json:"artifactPath"`
-	Contract     Contract `json:"contract"`
+	ArtifactPath string `json:"artifactPath,omitempty"`
+	// Contract is the contract describing the result,
+	Contract Contract `json:"contract"`
 }
 
 // Contract is a JellyFish contract
@@ -52,9 +54,9 @@ type ContractData struct {
 	// definitions. All fields need to specify `omitempty`.
 	//
 	// TODO: a better approach might to dynamically unmarshal this at runtime
-	GolangSourceData
-	ExecutableData
-	TestRunData
+	*GolangSourceData
+	*ExecutableData
+	*TestRunData
 }
 
 // GolangSourceData describes a repository, containing Go source code
@@ -62,7 +64,7 @@ type ContractData struct {
 // ref: https://github.com/product-os/t-golang-source
 type GolangSourceData struct {
 	// Platforms indicates which target platforms we support
-	Platforms []string `json:"platforms,omitempty"`
+	Platforms []string `json:"platforms"`
 	// Binaries lists the targets this repo can be built into,
 	// they should appear under ./cmd/<binary>
 	// If this is omitted we default to the repository name.
@@ -80,11 +82,11 @@ type GolangSourceData struct {
 // ref: https://github.com/product-os/t-executable
 type ExecutableData struct {
 	// Platforms indicates the target platform this executable supports
-	Platform string `json:"platform,omitempty"`
+	Platform string `json:"platform"`
 	// Filename of the executable
-	Filename string `json:"filename,omitempty"`
+	Filename string `json:"filename"`
 	// Version of the executable
-	Version string `json:"version,omitempty"`
+	Version string `json:"version"`
 	// DependsOn indicates system-level dependencies per distribution
 	DependsOn map[string][]string `json:"dependsOn,omitempty"`
 }
@@ -94,12 +96,12 @@ type ExecutableData struct {
 // ref: https://github.com/product-os/t-test-run
 type TestRunData struct {
 	// Success indicates the success status of the test run
-	Success bool          `json:"success,omitempty"`
+	Success bool          `json:"success"`
 	Suites  []SuiteResult `json:"suiteResults,omitempty"`
 }
 
 type SuiteResult struct {
-	Name           string   `json:"suiteName,omitempty"`
-	Success        bool     `json:"suiteSuccess,omitempty"`
+	Name           string   `json:"suiteName"`
+	Success        bool     `json:"suiteSuccess"`
 	UnmatchedFiles []string `json:"unmatchedFiles,omitempty"`
 }
