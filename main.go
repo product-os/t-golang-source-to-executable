@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -144,6 +145,15 @@ func main() {
 		})
 		if integrationSuites == nil && integrationErr != nil {
 			log.Fatalf("integration tests failed: %v", integrationErr)
+		}
+		entries, err := ioutil.ReadDir(outputArtifactPath)
+		if err != nil {
+			log.Fatalf("failed to read output artifact directory: %v", err)
+		}
+		if len(entries) == 0 {
+			// clear "artifactPath" of the result, this will omit this field from
+			// the output manifest
+			outputArtifactDirectory = ""
 		}
 		output.Results = append(output.Results, Result{
 			ArtifactPath: outputArtifactDirectory,

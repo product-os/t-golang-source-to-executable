@@ -13,8 +13,9 @@ type InputManifest struct {
 	Input struct {
 		// ArtifactPath is the directory containing assets,
 		// must be relative to the manifest
-		ArtifactPath string   `json:"artifactPath"`
-		Contract     Contract `json:"contract"`
+		ArtifactPath string `json:"artifactPath"`
+		// Contract is the contract describing the input
+		Contract Contract `json:"contract"`
 	} `json:"input"`
 }
 
@@ -28,8 +29,9 @@ type OutputManifest struct {
 type Result struct {
 	// ArtifactPath is the directory containing assets,
 	// must be relative to the manifest
-	ArtifactPath string   `json:"artifactPath"`
-	Contract     Contract `json:"contract"`
+	ArtifactPath string `json:"artifactPath,omitempty"`
+	// Contract is the contract describing the result,
+	Contract Contract `json:"contract"`
 }
 
 // Contract is a JellyFish contract
