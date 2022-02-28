@@ -23,7 +23,7 @@ data:
           - data
         properties:
           type:
-            const: type-product-os-t-golang-source@1.1.2
+            const: type-product-os-t-golang-source@1.1.3
           version:
             pattern: ^[^+]*- # only run on draft versions and build stuff
           data:
