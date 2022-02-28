@@ -1,6 +1,6 @@
 type: type-product-os-t-service-source@1.4.0
 name: Golang source to executable transformer
-version: 1.1.1
+version: 1.1.2
 slug: type-product-os-t-service-source-product-os-t-golang-source-to-executable
 data:
   platforms:
@@ -23,7 +23,7 @@ data:
           - data
         properties:
           type:
-            pattern: type-product-os-t-golang-source@1.*
+            const: type-product-os-t-golang-source@1.1.2
           version:
             pattern: ^[^+]*- # only run on draft versions and build stuff
           data:
