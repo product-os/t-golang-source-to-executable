@@ -1,9 +1,9 @@
 package main
 
 const (
-	TypeGolangSource = "type-product-os-t-golang-source@1.1.0"
+	TypeGolangSource = "type-product-os-t-golang-source@1.1.3"
 	TypeExecutable   = "type-product-os-t-executable@1.1.0"
-	TypeTestRun      = "type-product-os-t-test-run@1.0.2"
+	TypeTestRun      = "type-product-os-t-test-run@1.1.0"
 )
 
 // InputManifest describes the input to the transformer
