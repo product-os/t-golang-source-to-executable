@@ -42,7 +42,7 @@ func build(workdir string, debug bool, opts BuildOpts) error {
 		// actually supports getting the embedded module version since go 1.12
 		// we could rely on projects using that to set version... instead of embedding
 		// it like this
-		"-ldflags", fmt.Sprintf("'-X version.Version=%s'", opts.Version),
+		"-ldflags", fmt.Sprintf("-X version.Version=%s", opts.Version),
 
 		// TODO: is the context always a git repo / can I get the git commit
 		// with https://github.com/golang/go/issues/37475 (go 1.18)
@@ -58,7 +58,7 @@ func build(workdir string, debug bool, opts BuildOpts) error {
 
 	if len(opts.Tags) > 0 {
 		buildArgs = append(buildArgs,
-			"-tags", strings.Join(opts.Tags, " "))
+			"-tags", strings.Join(opts.Tags, ","))
 	}
 
 	// NOTE: not prepending the `./` gives just `cmd/<name>`
