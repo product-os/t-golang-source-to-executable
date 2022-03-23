@@ -2,7 +2,6 @@ package packages
 
 import (
 	"os"
-	"strings"
 
 	"github.com/product-os/t-golang-source-to-executable/pkg/shell"
 )
@@ -14,6 +13,10 @@ func init() {
 type Debian struct{}
 
 func (d *Debian) Install(pkgs ...string) error {
-	_, err := shell.Run("apt-get", []string{"install", strings.Join(pkgs, " ")}, nil, os.Stdout, nil)
+	var err error
+	_, err = shell.Run("apt-get", []string{"update"}, nil, os.Stdout, nil)
+	installArgs := []string{"install", "-y", "--no-install-recommends"}
+	installArgs = append(installArgs, pkgs...)
+	_, err = shell.Run("apt-get", installArgs, nil, os.Stdout, nil)
 	return err
 }
