@@ -13,6 +13,7 @@ artifactPath=$(jq -r '.results[0].artifactPath' "./test/${SUITE}/output/output-m
 
 # run the tf container on $SUITE
 docker run --rm \
+	--cap-add=CAP_SYS_ADMIN \
 	--mount=type=bind,target=/input,source="${PWD}/test/${SUITE}/input",ro \
 	--env=INPUT=/input/input-manifest.json \
 	--mount=type=bind,target=/output,source="${OUTDIR}" \

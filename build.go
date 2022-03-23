@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/product-os/t-golang-source-to-executable/pkg/shell"
 )
@@ -107,11 +108,13 @@ func gopathFix(workdir string, opts BuildOpts, env []string) (string, []string, 
 	}
 
 	// create "fake" gopath entry
-	if err := os.MkdirAll(filepath.Dir(gopath), os.ModeDir|os.ModePerm); err != nil {
+	if err := os.MkdirAll(gopath, os.ModeDir|os.ModePerm); err != nil {
 		return "", nil, err
 	}
-	if err := os.Symlink(workdir, gopath); err != nil {
-		return "", nil, err
+	// NOTE: we can't just do `os.Symlink(workdir, gopath)`
+	// see https://github.com/golang/go/issues/17198
+	if err := syscall.Mount(workdir, gopath, "", syscall.MS_BIND, ""); err != nil {
+		return "", nil, fmt.Errorf("failed to bind mount source: %w", err)
 	}
 	return gopath, env, nil
 }
