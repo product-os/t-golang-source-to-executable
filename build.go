@@ -12,24 +12,25 @@ import (
 )
 
 type BuildOpts struct {
-	Name      string
+	Bin       string
 	OutputDir string
 	Version   string
 	Tags      []string
+	Hack      hack
 }
 
 func build(workdir string, debug bool, opts BuildOpts) error {
 	var buildEnv []string
 
 	// handle non-modules
-	workdir, buildEnv, err := gopathFix(workdir, opts.Name, buildEnv)
+	workdir, buildEnv, err := gopathFix(workdir, opts, buildEnv)
 	if err != nil {
 		return fmt.Errorf("error setting up GOPATH: %w", err)
 	}
 
 	buildArgs := []string{
 		"build",
-		"-o", filepath.Join(opts.OutputDir, opts.Name),
+		"-o", filepath.Join(opts.OutputDir, opts.Bin),
 
 		// TODO: is standardizing on a version pkg a good idea?
 		//
@@ -62,7 +63,7 @@ func build(workdir string, debug bool, opts BuildOpts) error {
 
 	// NOTE: not prepending the `./` gives just `cmd/<name>`
 	// which leads go to look for a package in GOPATH :/
-	buildArgs = append(buildArgs, "./"+filepath.Join(".", "cmd", opts.Name))
+	buildArgs = append(buildArgs, "./"+filepath.Join(".", "cmd", opts.Bin))
 
 	_, err = shell.Run("go", buildArgs, nil, os.Stdout, os.Stderr,
 		shell.WithDir(workdir),
@@ -71,26 +72,40 @@ func build(workdir string, debug bool, opts BuildOpts) error {
 	return err
 }
 
-func gopathFix(workdir string, name string, env []string) (string, []string, error) {
+func gopathFix(workdir string, opts BuildOpts, env []string) (string, []string, error) {
 	_, err := os.Stat(filepath.Join(workdir, "go.mod"))
+	// is go module
 	if err == nil {
 		log.Println("build mode = module")
 		return workdir, env, nil
 	}
+	// handle stat error
 	if !errors.Is(err, os.ErrNotExist) {
 		return workdir, env, err
 	}
+
+	// needs gopath fix
 	log.Println("build mode = gopath")
+	// disable go modules
 	env = append(env, "GO111MODULE=off")
+
+	// construct gopath location
 	gopath, ok := os.LookupEnv("GOPATH")
 	if !ok {
 		return "", nil, errors.New("GOPATH undefined")
 	}
-	gopath = filepath.Join(gopath, "src", name)
+	// set $GOPATH/src/<bin>
+	module := opts.Bin
+	// HACK: enable setting $GOPATH/src/<hack.module>
+	if opts.Hack.Module != "" {
+		module = opts.Hack.Module
+	}
+	gopath = filepath.Join(gopath, "src", module)
 	// check if it exists and exit early
 	if _, err = os.Stat(gopath); err == nil {
 		return gopath, env, nil
 	}
+
 	// create "fake" gopath entry
 	if err := os.MkdirAll(filepath.Dir(gopath), os.ModeDir|os.ModePerm); err != nil {
 		return "", nil, err

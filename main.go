@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -95,15 +96,16 @@ func main() {
 		if input.Input.Contract.Data.GolangSourceData.Binaries != nil {
 			binaries = input.Input.Contract.Data.GolangSourceData.Binaries
 		} else {
-			// fallback to a binary with the same name as the repo
-			binaries = []string{input.Input.Contract.Name}
+			// fallback to "name" property in golang-source contract
+			binaries = []string{path.Base(input.Input.Contract.Name)}
 		}
 		for _, bin := range binaries {
 			if err := build(inputArtifactPath, debug, BuildOpts{
-				Name:      bin,
+				Bin:       bin,
 				Version:   input.Input.Contract.Version,
-				Tags:      input.Input.Contract.Data.GolangSourceData.Tags,
 				OutputDir: outputArtifactPath,
+				Tags:      input.Input.Contract.Data.GolangSourceData.Tags,
+				Hack:      input.Input.Contract.Data.GolangSourceData.Hack,
 			}); err != nil {
 				log.Fatalf("build failed: %v", err)
 			}

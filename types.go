@@ -133,6 +133,14 @@ type GolangSourceData struct {
 	// DependsOn indicates system-level dependencies per distribution.
 	// TODO: currently only debian packages are supported.
 	DependsOn map[string][]string `json:"dependsOn,omitempty"`
+
+	// hack holds some hacks
+	Hack hack `json:"hack,omitempty"`
+}
+
+type hack struct {
+	// Module allows overwriting the module path used in GOPATH mode
+	Module string `json:"module"`
 }
 
 // ExecutableData describes a single executable output
