@@ -1,10 +1,5 @@
 {
   "data": {
-    "dependsOn": {
-      "debian": [
-        "scdoc"
-      ]
-    },
     "platforms": [
       "linux/amd64"
     ],

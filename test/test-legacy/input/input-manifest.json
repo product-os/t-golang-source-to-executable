@@ -2,11 +2,6 @@
   "input": {
     "contract": {
       "data": {
-        "dependsOn": {
-          "debian": [
-            "scdoc"
-          ]
-        },
         "platforms": [
           "linux/amd64"
         ],

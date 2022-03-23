@@ -1,4 +1,4 @@
-package helloworld_legacy
+package helloworld
 
 import (
 	"testing"
