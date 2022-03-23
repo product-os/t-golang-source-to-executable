@@ -4,7 +4,7 @@
       "data": {
         "dependsOn": {
           "debian": [
-            "scdoc"
+            "libseccomp-dev"
           ]
         },
         "platforms": [

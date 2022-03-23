@@ -6,7 +6,12 @@
         "data": {
           "platform": "linux/amd64",
           "filename": "foo",
-          "version": "0.1.0"
+          "version": "0.1.0",
+          "dependsOn": {
+            "debian": [
+              "libseccomp-dev"
+            ]
+          }
         }
       },
       "artifactPath": "artifacts"
@@ -17,7 +22,12 @@
         "data": {
           "platform": "linux/amd64",
           "filename": "bar",
-          "version": "0.1.0"
+          "version": "0.1.0",
+          "dependsOn": {
+            "debian": [
+              "libseccomp-dev"
+            ]
+          }
         }
       },
       "artifactPath": "artifacts"
