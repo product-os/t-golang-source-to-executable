@@ -67,12 +67,8 @@ func main() {
 	)
 
 	// load input contract
-	inputFd, err := os.Open(inputPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := json.NewDecoder(inputFd).Decode(&input); err != nil {
-		log.Fatal(err)
+	if err := loadInputManifest(inputPath, &input); err != nil {
+		log.Fatalf("failed to load input manifest: %s", err)
 	}
 
 	if debug {
@@ -96,8 +92,8 @@ func main() {
 	switch mode {
 	case "build":
 		var binaries []string
-		if input.Input.Contract.Data.Binaries != nil {
-			binaries = input.Input.Contract.Data.Binaries
+		if input.Input.Contract.Data.GolangSourceData.Binaries != nil {
+			binaries = input.Input.Contract.Data.GolangSourceData.Binaries
 		} else {
 			// fallback to a binary with the same name as the repo
 			binaries = []string{input.Input.Contract.Name}
@@ -179,6 +175,18 @@ func main() {
 	if err := json.NewEncoder(outputFd).Encode(output); err != nil {
 		log.Fatalf("writing output manifest %s: %v", outputPath, err)
 	}
+}
+
+func loadInputManifest(inputPath string, input *InputManifest) error {
+	inputFd, err := os.Open(inputPath)
+	if err != nil {
+		return err
+	}
+	defer inputFd.Close()
+	if err := json.NewDecoder(inputFd).Decode(input); err != nil {
+		return err
+	}
+	return nil
 }
 
 func setupTaskEnvironment(data *GolangSourceData) error {
