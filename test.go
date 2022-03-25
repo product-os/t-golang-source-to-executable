@@ -18,8 +18,8 @@ var integrationTestRegex = regexp.MustCompile(`integration`)
 
 type TestOpts struct {
 	Name        string
-	Tags        []string
 	Integration bool
+	Contract    *GolangSourceData
 }
 
 func test(workdir string, debug bool, opts TestOpts) (suites []SuiteResult, err error) {
@@ -27,13 +27,13 @@ func test(workdir string, debug bool, opts TestOpts) (suites []SuiteResult, err 
 
 	if opts.Integration {
 		log.Printf("running integration tests")
-		opts.Tags = append(opts.Tags, "integration")
+		opts.Contract.Tags = append(opts.Contract.Tags, "integration")
 	} else {
 		log.Printf("running unit tests")
 	}
 
 	// handle non-modules
-	workdir, testEnv, err = gopathFix(workdir, opts.Name, testEnv)
+	workdir, testEnv, err = gopathFix(workdir, opts.Name, opts.Contract, testEnv)
 	if err != nil {
 		return nil, fmt.Errorf("error setting up GOPATH: %w", err)
 	}
@@ -55,9 +55,9 @@ func test(workdir string, debug bool, opts TestOpts) (suites []SuiteResult, err 
 
 	// go build args
 	var buildArgs []string
-	if len(opts.Tags) > 0 {
+	if len(opts.Contract.Tags) > 0 {
 		buildArgs = append(buildArgs,
-			"-tags", strings.Join(opts.Tags, " "))
+			"-tags", strings.Join(opts.Contract.Tags, ","))
 	}
 	testArgs = append(testArgs, buildArgs...)
 

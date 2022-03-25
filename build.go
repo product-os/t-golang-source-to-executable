@@ -16,15 +16,14 @@ type BuildOpts struct {
 	Bin       string
 	OutputDir string
 	Version   string
-	Tags      []string
-	Hack      hack
+	Contract  *GolangSourceData
 }
 
 func build(workdir string, debug bool, opts BuildOpts) error {
 	var buildEnv []string
 
 	// handle non-modules
-	workdir, buildEnv, err := gopathFix(workdir, opts, buildEnv)
+	workdir, buildEnv, err := gopathFix(workdir, opts.Bin, opts.Contract, buildEnv)
 	if err != nil {
 		return fmt.Errorf("error setting up GOPATH: %w", err)
 	}
@@ -57,9 +56,9 @@ func build(workdir string, debug bool, opts BuildOpts) error {
 		buildArgs = append(buildArgs, "-x")
 	}
 
-	if len(opts.Tags) > 0 {
+	if len(opts.Contract.Tags) > 0 {
 		buildArgs = append(buildArgs,
-			"-tags", strings.Join(opts.Tags, ","))
+			"-tags", strings.Join(opts.Contract.Tags, ","))
 	}
 
 	// NOTE: not prepending the `./` gives just `cmd/<name>`
@@ -73,7 +72,7 @@ func build(workdir string, debug bool, opts BuildOpts) error {
 	return err
 }
 
-func gopathFix(workdir string, opts BuildOpts, env []string) (string, []string, error) {
+func gopathFix(workdir, bin string, contract *GolangSourceData, env []string) (string, []string, error) {
 	_, err := os.Stat(filepath.Join(workdir, "go.mod"))
 	// is go module
 	if err == nil {
@@ -96,10 +95,10 @@ func gopathFix(workdir string, opts BuildOpts, env []string) (string, []string, 
 		return "", nil, errors.New("GOPATH undefined")
 	}
 	// set $GOPATH/src/<bin>
-	module := opts.Bin
+	module := bin
 	// HACK: enable setting $GOPATH/src/<hack.module>
-	if opts.Hack.Module != "" {
-		module = opts.Hack.Module
+	if contract.Hack.Module != "" {
+		module = contract.Hack.Module
 	}
 	gopath = filepath.Join(gopath, "src", module)
 	// check if it exists and exit early

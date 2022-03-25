@@ -104,8 +104,7 @@ func main() {
 				Bin:       bin,
 				Version:   input.Input.Contract.Version,
 				OutputDir: outputArtifactPath,
-				Tags:      input.Input.Contract.Data.GolangSourceData.Tags,
-				Hack:      input.Input.Contract.Data.GolangSourceData.Hack,
+				Contract:  input.Input.Contract.Data.GolangSourceData,
 			}); err != nil {
 				log.Fatalf("build failed: %v", err)
 			}
@@ -130,16 +129,16 @@ func main() {
 	case "test":
 		unitSuites, unitErr := test(inputArtifactPath, debug, TestOpts{
 			Name:        input.Input.Contract.Name,
-			Tags:        input.Input.Contract.Data.GolangSourceData.Tags,
 			Integration: false,
+			Contract:    input.Input.Contract.Data.GolangSourceData,
 		})
 		if unitSuites == nil && unitErr != nil {
 			log.Fatalf("unit tests failed: %v", unitErr)
 		}
 		integrationSuites, integrationErr := test(inputArtifactPath, debug, TestOpts{
 			Name:        input.Input.Contract.Name,
-			Tags:        input.Input.Contract.Data.GolangSourceData.Tags,
 			Integration: true,
+			Contract:    input.Input.Contract.Data.GolangSourceData,
 		})
 		if integrationSuites == nil && integrationErr != nil {
 			log.Fatalf("integration tests failed: %v", integrationErr)
