@@ -2,11 +2,6 @@
   "input": {
     "contract": {
       "data": {
-        "dependsOn": {
-          "debian": [
-            "scdoc"
-          ]
-        },
         "platforms": [
           "linux/amd64"
         ],
@@ -15,8 +10,11 @@
         ]
       },
       "name": "helloworld-legacy",
-      "type": "type-product-os-t-golang-source@1.1.0",
-      "version": "0.1.0"
+      "type": "type-product-os-t-golang-source@1.1.3",
+      "version": "0.1.0",
+      "hack": {
+        "module": "example.com/helloworld-legacy"
+      }
     },
     "artifactPath": "."
   }

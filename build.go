@@ -7,29 +7,30 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/product-os/t-golang-source-to-executable/pkg/shell"
 )
 
 type BuildOpts struct {
-	Name      string
+	Bin       string
 	OutputDir string
 	Version   string
-	Tags      []string
+	Contract  *GolangSourceData
 }
 
 func build(workdir string, debug bool, opts BuildOpts) error {
 	var buildEnv []string
 
 	// handle non-modules
-	workdir, buildEnv, err := gopathFix(workdir, opts.Name, buildEnv)
+	workdir, buildEnv, err := gopathFix(workdir, opts.Bin, opts.Contract, buildEnv)
 	if err != nil {
 		return fmt.Errorf("error setting up GOPATH: %w", err)
 	}
 
 	buildArgs := []string{
 		"build",
-		"-o", filepath.Join(opts.OutputDir, opts.Name),
+		"-o", filepath.Join(opts.OutputDir, opts.Bin),
 
 		// TODO: is standardizing on a version pkg a good idea?
 		//
@@ -41,7 +42,7 @@ func build(workdir string, debug bool, opts BuildOpts) error {
 		// actually supports getting the embedded module version since go 1.12
 		// we could rely on projects using that to set version... instead of embedding
 		// it like this
-		"-ldflags", fmt.Sprintf("'-X version.Version=%s'", opts.Version),
+		"-ldflags", fmt.Sprintf("-X version.Version=%s", opts.Version),
 
 		// TODO: is the context always a git repo / can I get the git commit
 		// with https://github.com/golang/go/issues/37475 (go 1.18)
@@ -55,14 +56,14 @@ func build(workdir string, debug bool, opts BuildOpts) error {
 		buildArgs = append(buildArgs, "-x")
 	}
 
-	if len(opts.Tags) > 0 {
+	if len(opts.Contract.Tags) > 0 {
 		buildArgs = append(buildArgs,
-			"-tags", strings.Join(opts.Tags, " "))
+			"-tags", strings.Join(opts.Contract.Tags, ","))
 	}
 
 	// NOTE: not prepending the `./` gives just `cmd/<name>`
 	// which leads go to look for a package in GOPATH :/
-	buildArgs = append(buildArgs, "./"+filepath.Join(".", "cmd", opts.Name))
+	buildArgs = append(buildArgs, "./"+filepath.Join(".", "cmd", opts.Bin))
 
 	_, err = shell.Run("go", buildArgs, nil, os.Stdout, os.Stderr,
 		shell.WithDir(workdir),
@@ -71,32 +72,48 @@ func build(workdir string, debug bool, opts BuildOpts) error {
 	return err
 }
 
-func gopathFix(workdir string, name string, env []string) (string, []string, error) {
+func gopathFix(workdir, bin string, contract *GolangSourceData, env []string) (string, []string, error) {
 	_, err := os.Stat(filepath.Join(workdir, "go.mod"))
+	// is go module
 	if err == nil {
 		log.Println("build mode = module")
 		return workdir, env, nil
 	}
+	// handle stat error
 	if !errors.Is(err, os.ErrNotExist) {
 		return workdir, env, err
 	}
+
+	// needs gopath fix
 	log.Println("build mode = gopath")
+	// disable go modules
 	env = append(env, "GO111MODULE=off")
+
+	// construct gopath location
 	gopath, ok := os.LookupEnv("GOPATH")
 	if !ok {
 		return "", nil, errors.New("GOPATH undefined")
 	}
-	gopath = filepath.Join(gopath, "src", name)
+	// set $GOPATH/src/<bin>
+	module := bin
+	// HACK: enable setting $GOPATH/src/<hack.module>
+	if contract.Hack.Module != "" {
+		module = contract.Hack.Module
+	}
+	gopath = filepath.Join(gopath, "src", module)
 	// check if it exists and exit early
 	if _, err = os.Stat(gopath); err == nil {
 		return gopath, env, nil
 	}
+
 	// create "fake" gopath entry
-	if err := os.MkdirAll(filepath.Dir(gopath), os.ModeDir|os.ModePerm); err != nil {
+	if err := os.MkdirAll(gopath, os.ModeDir|os.ModePerm); err != nil {
 		return "", nil, err
 	}
-	if err := os.Symlink(workdir, gopath); err != nil {
-		return "", nil, err
+	// NOTE: we can't just do `os.Symlink(workdir, gopath)`
+	// see https://github.com/golang/go/issues/17198
+	if err := syscall.Mount(workdir, gopath, "", syscall.MS_BIND, ""); err != nil {
+		return "", nil, fmt.Errorf("failed to bind mount source: %w", err)
 	}
 	return gopath, env, nil
 }

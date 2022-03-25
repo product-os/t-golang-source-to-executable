@@ -1,5 +1,10 @@
 package main
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 const (
 	TypeGolangSource = "type-product-os-t-golang-source@1.1.3"
 	TypeExecutable   = "type-product-os-t-executable@1.1.0"
@@ -38,25 +43,78 @@ type Result struct {
 //
 // ref: https://github.com/product-os/transformer-runtime/blob/v1.5.0/lib/types/index.ts#L14
 // ref: https://github.com/product-os/jellyfish-types/blob/v2.0.4/lib/core/contracts/contract.ts#L11
+type contractJSON struct {
+	Type    string          `json:"type"`
+	Version string          `json:"version,omitempty"`
+	Name    string          `json:"name,omitempty"`
+	Data    json.RawMessage `json:"data"`
+}
 type Contract struct {
-	Type    string       `json:"type"`
-	Version string       `json:"version,omitempty"`
-	Name    string       `json:"name,omitempty"`
-	Data    ContractData `json:"data"`
+	Type    string
+	Version string
+	Name    string
+	Data    ContractData
+}
+
+func (c *Contract) UnmarshalJSON(data []byte) (err error) {
+	var intermediate contractJSON
+	err = json.Unmarshal(data, &intermediate)
+	if err != nil {
+		return err
+	}
+	switch intermediate.Type {
+	case TypeGolangSource:
+		c.Data.GolangSourceData = new(GolangSourceData)
+		err = json.Unmarshal(intermediate.Data, c.Data.GolangSourceData)
+	case TypeExecutable:
+		c.Data.ExecutableData = new(ExecutableData)
+		err = json.Unmarshal(intermediate.Data, c.Data.ExecutableData)
+	case TypeTestRun:
+		c.Data.TestRunData = new(TestRunData)
+		err = json.Unmarshal(intermediate.Data, c.Data.TestRunData)
+	default:
+		return fmt.Errorf("unknown contract type %q", intermediate.Type)
+	}
+	if err != nil {
+		return err
+	}
+	c.Type = intermediate.Type
+	c.Version = intermediate.Version
+	c.Name = intermediate.Name
+	return err
+}
+
+func (c *Contract) MarshalJSON() ([]byte, error) {
+	var (
+		intermediate contractJSON
+		err          error
+	)
+	switch c.Type {
+	case TypeGolangSource:
+		intermediate.Data, err = json.Marshal(c.Data.GolangSourceData)
+	case TypeExecutable:
+		intermediate.Data, err = json.Marshal(c.Data.ExecutableData)
+	case TypeTestRun:
+		intermediate.Data, err = json.Marshal(c.Data.TestRunData)
+	default:
+		return nil, fmt.Errorf("unknown contract type %q", intermediate.Type)
+	}
+	if err != nil {
+		return nil, err
+	}
+	intermediate.Type = c.Type
+	intermediate.Version = c.Version
+	intermediate.Name = c.Name
+	return json.Marshal(intermediate)
 }
 
 // ContractData is the type-specific part of Contract
 //
 // ref: https://github.com/product-os/transformer-runtime/blob/v1.5.0/lib/types/index.ts#L24
 type ContractData struct {
-	// NOTE: We compose this meta type out of the combined fields of all types
-	// supported below. When adding new fields be careful about overlapping
-	// definitions. All fields need to specify `omitempty`.
-	//
-	// TODO: a better approach might to dynamically unmarshal this at runtime
-	*GolangSourceData
-	*ExecutableData
-	*TestRunData
+	GolangSourceData *GolangSourceData
+	ExecutableData   *ExecutableData
+	TestRunData      *TestRunData
 }
 
 // GolangSourceData describes a repository, containing Go source code
@@ -73,8 +131,16 @@ type GolangSourceData struct {
 	// TODO: do we need to specify them per binary
 	Tags []string `json:"tags,omitempty"`
 	// DependsOn indicates system-level dependencies per distribution.
-	// Currently only debian packages are supported.
+	// TODO: currently only debian packages are supported.
 	DependsOn map[string][]string `json:"dependsOn,omitempty"`
+
+	// hack holds some hacks
+	Hack hack `json:"hack,omitempty"`
+}
+
+type hack struct {
+	// Module allows overwriting the module path used in GOPATH mode
+	Module string `json:"module"`
 }
 
 // ExecutableData describes a single executable output

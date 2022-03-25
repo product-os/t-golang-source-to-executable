@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -67,12 +68,8 @@ func main() {
 	)
 
 	// load input contract
-	inputFd, err := os.Open(inputPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := json.NewDecoder(inputFd).Decode(&input); err != nil {
-		log.Fatal(err)
+	if err := loadInputManifest(inputPath, &input); err != nil {
+		log.Fatalf("failed to load input manifest: %s", err)
 	}
 
 	if debug {
@@ -96,18 +93,18 @@ func main() {
 	switch mode {
 	case "build":
 		var binaries []string
-		if input.Input.Contract.Data.Binaries != nil {
-			binaries = input.Input.Contract.Data.Binaries
+		if input.Input.Contract.Data.GolangSourceData.Binaries != nil {
+			binaries = input.Input.Contract.Data.GolangSourceData.Binaries
 		} else {
-			// fallback to a binary with the same name as the repo
-			binaries = []string{input.Input.Contract.Name}
+			// fallback to "name" property in golang-source contract
+			binaries = []string{path.Base(input.Input.Contract.Name)}
 		}
 		for _, bin := range binaries {
 			if err := build(inputArtifactPath, debug, BuildOpts{
-				Name:      bin,
+				Bin:       bin,
 				Version:   input.Input.Contract.Version,
-				Tags:      input.Input.Contract.Data.GolangSourceData.Tags,
 				OutputDir: outputArtifactPath,
+				Contract:  input.Input.Contract.Data.GolangSourceData,
 			}); err != nil {
 				log.Fatalf("build failed: %v", err)
 			}
@@ -130,21 +127,12 @@ func main() {
 		}
 
 	case "test":
-		unitSuites, unitErr := test(inputArtifactPath, debug, TestOpts{
-			Name:        input.Input.Contract.Name,
-			Tags:        input.Input.Contract.Data.GolangSourceData.Tags,
-			Integration: false,
+		suites, err := test(inputArtifactPath, debug, TestOpts{
+			Name:     input.Input.Contract.Name,
+			Contract: input.Input.Contract.Data.GolangSourceData,
 		})
-		if unitSuites == nil && unitErr != nil {
-			log.Fatalf("unit tests failed: %v", unitErr)
-		}
-		integrationSuites, integrationErr := test(inputArtifactPath, debug, TestOpts{
-			Name:        input.Input.Contract.Name,
-			Tags:        input.Input.Contract.Data.GolangSourceData.Tags,
-			Integration: true,
-		})
-		if integrationSuites == nil && integrationErr != nil {
-			log.Fatalf("integration tests failed: %v", integrationErr)
+		if suites == nil && err != nil {
+			log.Fatalf("tests failed: %v", err)
 		}
 		entries, err := ioutil.ReadDir(outputArtifactPath)
 		if err != nil {
@@ -160,8 +148,8 @@ func main() {
 			Contract: Contract{
 				Type: TypeTestRun,
 				Data: ContractData{TestRunData: &TestRunData{
-					Success: (unitErr == nil && integrationErr == nil),
-					Suites:  append(unitSuites, integrationSuites...),
+					Success: (err == nil),
+					Suites:  suites,
 				}},
 			},
 		})
@@ -179,6 +167,18 @@ func main() {
 	if err := json.NewEncoder(outputFd).Encode(output); err != nil {
 		log.Fatalf("writing output manifest %s: %v", outputPath, err)
 	}
+}
+
+func loadInputManifest(inputPath string, input *InputManifest) error {
+	inputFd, err := os.Open(inputPath)
+	if err != nil {
+		return err
+	}
+	defer inputFd.Close()
+	if err := json.NewDecoder(inputFd).Decode(input); err != nil {
+		return err
+	}
+	return nil
 }
 
 func setupTaskEnvironment(data *GolangSourceData) error {
