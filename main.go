@@ -127,21 +127,33 @@ func main() {
 		}
 
 	case "test":
-		unitSuites, unitErr := test(inputArtifactPath, debug, TestOpts{
-			Name:        input.Input.Contract.Name,
-			Integration: false,
-			Contract:    input.Input.Contract.Data.GolangSourceData,
-		})
-		if unitSuites == nil && unitErr != nil {
-			log.Fatalf("unit tests failed: %v", unitErr)
+		var (
+			suites                  []SuiteResult
+			unitErr, integrationErr error
+		)
+		if v, ok := os.LookupEnv("TEST_UNIT"); ok && v != "0" {
+			unitSuites, err := test(inputArtifactPath, debug, TestOpts{
+				Name:        input.Input.Contract.Name,
+				Integration: false,
+				Contract:    input.Input.Contract.Data.GolangSourceData,
+			})
+			if unitSuites == nil && err != nil {
+				log.Fatalf("unit tests failed: %v", unitErr)
+			}
+			suites = append(suites, unitSuites...)
+			unitErr = err
 		}
-		integrationSuites, integrationErr := test(inputArtifactPath, debug, TestOpts{
-			Name:        input.Input.Contract.Name,
-			Integration: true,
-			Contract:    input.Input.Contract.Data.GolangSourceData,
-		})
-		if integrationSuites == nil && integrationErr != nil {
-			log.Fatalf("integration tests failed: %v", integrationErr)
+		if v, ok := os.LookupEnv("TEST_INTEGRATION"); ok && v != "0" {
+			integrationSuites, err := test(inputArtifactPath, debug, TestOpts{
+				Name:        input.Input.Contract.Name,
+				Integration: true,
+				Contract:    input.Input.Contract.Data.GolangSourceData,
+			})
+			if integrationSuites == nil && err != nil {
+				log.Fatalf("integration tests failed: %v", integrationErr)
+			}
+			suites = append(suites, integrationSuites...)
+			integrationErr = err
 		}
 		entries, err := ioutil.ReadDir(outputArtifactPath)
 		if err != nil {
@@ -158,7 +170,7 @@ func main() {
 				Type: TypeTestRun,
 				Data: ContractData{TestRunData: &TestRunData{
 					Success: (unitErr == nil && integrationErr == nil),
-					Suites:  append(unitSuites, integrationSuites...),
+					Suites:  suites,
 				}},
 			},
 		})
