@@ -8,29 +8,18 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/product-os/t-golang-source-to-executable/pkg/shell"
 )
 
-var integrationTestRegex = regexp.MustCompile(`integration`)
-
 type TestOpts struct {
-	Name        string
-	Integration bool
-	Contract    *GolangSourceData
+	Name     string
+	Contract *GolangSourceData
 }
 
 func test(workdir string, debug bool, opts TestOpts) (suites []SuiteResult, err error) {
 	var testEnv []string
-
-	if opts.Integration {
-		log.Printf("running integration tests")
-		opts.Contract.Tags = append(opts.Contract.Tags, "integration")
-	} else {
-		log.Printf("running unit tests")
-	}
 
 	// handle non-modules
 	workdir, testEnv, err = gopathFix(workdir, opts.Name, opts.Contract, testEnv)
@@ -61,7 +50,7 @@ func test(workdir string, debug bool, opts TestOpts) (suites []SuiteResult, err 
 	}
 	testArgs = append(testArgs, buildArgs...)
 
-	pkgList, err := listPackages(workdir, buildArgs, testEnv, opts.Integration)
+	pkgList, err := listPackages(workdir, buildArgs, testEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +88,7 @@ func test(workdir string, debug bool, opts TestOpts) (suites []SuiteResult, err 
 	return suites, err
 }
 
-func listPackages(workdir string, buildArgs, env []string, runIntegrationTests bool) (pkgList []string, err error) {
+func listPackages(workdir string, buildArgs, env []string) (pkgList []string, err error) {
 	var stdout bytes.Buffer
 	listArgs := []string{"list"}
 	listArgs = append(listArgs, buildArgs...)
@@ -110,14 +99,7 @@ func listPackages(workdir string, buildArgs, env []string, runIntegrationTests b
 	if err != nil {
 		return nil, err
 	}
-	scanner := bufio.NewScanner(&stdout)
-	for scanner.Scan() {
-		isIntegrationTestPackage := integrationTestRegex.MatchString(scanner.Text())
-		// filter for integration test packages
-		if (isIntegrationTestPackage && !runIntegrationTests) ||
-			(!isIntegrationTestPackage && runIntegrationTests) {
-			continue
-		}
+	for scanner := bufio.NewScanner(&stdout); scanner.Scan(); {
 		pkgList = append(pkgList, scanner.Text())
 	}
 	return pkgList, nil
